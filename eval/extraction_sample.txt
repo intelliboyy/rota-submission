@@ -1,0 +1,31 @@
+##### B2-000
+L1: NONE
+L4: NOT_STATION(Ayesha, packing)
+L6: NOT_STATION(Ayesha, calibration)
+L9: NONE
+L12: BETWEEN(Meera, Tomas, Rohan)
+L13: NONE
+L14: NONE
+L15: NONE
+L17: NOT_STATION(Meera, calibration)
+L19: NOT_AT(Rohan, 07:00)
+L2: NONE
+L5: NONE
+L10: NONE
+L20: NONE
+L3: NONE
+
+##### B2-001
+L7: NONE
+L9: NONE
+L10: NONE
+L13: AT(Daniel, 09:00)
+L14: NONE
+L15: NONE
+L2: NONE
+L4: NONE
+L6: STATION(Daniel, calibration)
+L8: STATION(Tomas, intake)
+L15: NONE
+L18: NONE
+L14: BETWEEN(Rohan, Ayesha, Tomas)

@@ -1,0 +1,29 @@
+# Local credentials and environments
+.env
+.venv/
+venv/
+hii/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# Company-provided task data and local outputs (keep data/README.md only)
+data/*
+!data/README.md
+answers*.json
+a1.json
+a10.json
+a1_up.json
+calls*.jsonl
+debug*.json
+x.json
+*.tmp
+
+# Local archives / editor noise
+*.zip
+*.7z
+*.tar
+*.tar.gz
+.DS_Store
