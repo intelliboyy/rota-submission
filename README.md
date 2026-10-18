@@ -101,26 +101,39 @@ Line recall does not translate directly into item exact match. One missed or rev
 
 ## Ablations and reproducibility
 
-The ablation harness is implemented in `eval/ablate.py`, but **the committed `eval/ablation.md` and `eval/ablation.csv` are mock-backend machinery checks, not a Granite ablation**. The CSV marks its entries `evidence_mode=mock`; those scores must not be interpreted as model performance. Controlled model-based ablations are not yet available in this snapshot, so no invented or mock values are presented as Granite results.
+The ablation harness is implemented in `eval/ablate.py`. The current [`eval/ablation.md`](eval/ablation.md) and [`eval/ablation.csv`](eval/ablation.csv) contain the latest uploaded, configured-endpoint results: one run for each configuration/budget and zero budget violations. These files use the non-mock output schema; mock-backend results from `--mock noisy` are machinery checks and must not be treated as model-performance evidence.
 
-The implemented rows are:
+The visible-set results below report **macro exact match (unique / ambiguous / inconsistent exact-match rates)**. All numbers are percentages. The dataset contains 60 visible items, balanced across the three cases; each ablation cell has one run, so no meaningful run-to-run standard deviation is available.
 
-| Row | Comparison | Question |
-|---|---|---|
-| A vs B | Flat prompt vs routed sections, one pass | Does routing improve first-pass extraction? |
-| B vs B2 | Base-rate hint on vs off | Do per-section prevalence hints help separate constraints from `NONE`? |
-| B vs B3 | Worked examples on vs off | Are the examples worth their token cost? |
-| B vs C | One pass vs repeated votes | Do repeated extractions improve the 1×/3×/10× curve? |
-| C vs C3 | Adaptive acceptance threshold vs majority-only | Does accepting a lower vote share recover missed constraints? |
-| C vs D | Voting without repair vs solver-guided repair | Do targeted re-reads fix the most consequential errors? |
+| Row | Component | 1×: macro (U/A/I) | 3×: macro (U/A/I) | 10×: macro (U/A/I) |
+|---|---|---:|---:|---:|
+| A | Flat prompt, one pass | 35.0% (35.0/30.0/40.0) | 41.7% (40.0/40.0/45.0) | 38.3% (35.0/35.0/45.0) |
+| B | Routed sections, one pass | 41.7% (35.0/35.0/55.0) | 40.0% (35.0/30.0/55.0) | 40.0% (35.0/35.0/50.0) |
+| B2 | Routed, no base-rate hint | 35.0% (35.0/20.0/50.0) | 35.0% (45.0/10.0/50.0) | 40.0% (40.0/25.0/55.0) |
+| B3 | Routed, no demonstrations | 26.7% (20.0/20.0/40.0) | 25.0% (30.0/20.0/25.0) | 11.7% (5.0/0.0/30.0) |
+| C | Voting with budget plan | 43.3% (50.0/30.0/50.0) | 46.7% (45.0/40.0/55.0) | 65.0% (65.0/50.0/80.0) |
+| C3 | Majority-only acceptance (0.5) | 40.0% (40.0/25.0/55.0) | 43.3% (40.0/40.0/50.0) | 55.0% (55.0/50.0/60.0) |
+| D | Full solver-guided repair | 36.7% (45.0/25.0/40.0) | 48.3% (50.0/45.0/50.0) | **70.0% (60.0/60.0/90.0)** |
 
-After the local task data has been copied into `data/` and the endpoint settings are available, run the default full ablation with:
+All 21 ablation runs report zero budget violations. The full per-run values are available in [`eval/ablation.csv`](eval/ablation.csv); interpretation and the reproducibility command are documented in [`eval/ablation.md`](eval/ablation.md).
+
+### What the ablation suggests
+
+- **Voting improves with budget:** row C reaches 65.0% at 10×, versus 38.3% for the flat prompt (A) and 40.0% for routed one-pass prompting (B).
+- **Solver-guided repair helps most at higher budget in this run:** D scores 36.7% at 1×, 48.3% at 3×, and 70.0% at 10×. Compared with C, D is lower by 6.6 percentage points at 1×, higher by 1.6 points at 3×, and higher by 5.0 points at 10×.
+- **Demonstrations matter:** removing demonstrations (B3) reduces the 10× result to 11.7%, compared with 40.0% for B.
+- **Base-rate hints help at lower budgets in this run:** B exceeds B2 at 1× and 3×, while they tie at 40.0% at 10×.
+- **Adaptive acceptance beats majority-only acceptance:** C exceeds C3 at every budget, with a 10-point difference at 10×.
+
+These are single-run results on the visible set, so they are descriptive rather than statistically conclusive and do not establish held-out generalization. The primary benchmark table above comes from a separate sampled run: its 10× score (76.7%) differs from row D here (70.0%). At temperature 1.0 and one run per setting, this is run-to-run variability, not a paired comparison.
+
+To reproduce the ablation with the configured endpoint and local task data, run:
 
 ```bash
 python -m eval.ablate --rows A B B2 B3 C C3 D --runs 1
 ```
 
-This runs every listed row at all three budgets and writes `eval/ablation.md` and `eval/ablation.csv`. It makes many endpoint calls; check the row/budget plan before increasing `--runs`. Use the actual Granite endpoint for reportable results, not `--mock noisy`.
+The harness runs all listed rows at the 1×, 3×, and 10× budgets and writes `eval/ablation.md` and `eval/ablation.csv`. It makes multiple endpoint calls; inspect the row/budget plan before increasing `--runs`. Use `--mock noisy` only to validate the report-writing and budget-check code, not for model-performance claims.
 
 ## What I tried, what I kept
 
